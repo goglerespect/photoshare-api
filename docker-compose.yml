@@ -1,0 +1,25 @@
+services:
+
+  api:
+    build: .
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - db
+
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/photoshare
+
+  db:
+    image: postgres:16
+
+    environment:
+      POSTGRES_DB: photoshare
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+
+    ports:
+      - "5433:5432"
+      
