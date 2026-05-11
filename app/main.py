@@ -12,6 +12,7 @@ from app.models.user import User
 
 # Import routes
 from app.routes.auth import router as auth_router
+from app.routes.test import router as test_router
 
 
 # FastAPI app
@@ -41,6 +42,7 @@ for i in range(10):
 
 # Connect routes
 app.include_router(auth_router)
+app.include_router(test_router)
 
 
 # Root endpoint

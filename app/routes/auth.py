@@ -57,12 +57,19 @@ def register(
     hashed_password = hash_password(
         body.password
     )
+    # Рахуємо користувачів
+    users_count = db.query(User).count()
+
+    # Перший user = admin
+    role = "admin" if users_count == 0 else "user"
 
     user = User(
-        email=body.email,
-        username=body.username,
-        password=hashed_password
+    email=body.email,
+    username=body.username,
+    password=hashed_password,
+    role=role
     )
+    
 
     db.add(user)
 
