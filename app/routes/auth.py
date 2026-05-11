@@ -15,8 +15,10 @@ from app.core.security import hash_password
 from app.core.security import verify_password
 
 from app.core.auth import create_access_token
+from app.core.auth import get_current_user
 
 
+# ROUTER
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
@@ -30,7 +32,6 @@ def register(
     db: Session = Depends(get_db)
 ):
 
-    # Перевірка email
     existing_email = db.query(User).filter(
         User.email == body.email
     ).first()
@@ -42,7 +43,6 @@ def register(
             detail="Email already exists"
         )
 
-    # Перевірка username
     existing_username = db.query(User).filter(
         User.username == body.username
     ).first()
@@ -54,12 +54,10 @@ def register(
             detail="Username already exists"
         )
 
-    # Хешуємо пароль
     hashed_password = hash_password(
         body.password
     )
 
-    # Створення user
     user = User(
         email=body.email,
         username=body.username,
@@ -69,6 +67,8 @@ def register(
     db.add(user)
 
     db.commit()
+
+    db.refresh(user)
 
     return {
         "message": "User created"
@@ -82,12 +82,10 @@ def login(
     db: Session = Depends(get_db)
 ):
 
-    # Шукаємо користувача
     user = db.query(User).filter(
         User.email == body.email
     ).first()
 
-    # Якщо користувача нема
     if not user:
 
         raise HTTPException(
@@ -95,7 +93,6 @@ def login(
             detail="Invalid credentials"
         )
 
-    # Перевірка пароля
     valid_password = verify_password(
         body.password,
         user.password
@@ -108,7 +105,6 @@ def login(
             detail="Invalid credentials"
         )
 
-    # Генерація JWT
     access_token = create_access_token({
         "sub": user.email
     })
@@ -116,4 +112,18 @@ def login(
     return {
         "access_token": access_token,
         "token_type": "bearer"
+    }
+
+
+# CURRENT USER
+@router.get("/me")
+def get_me(
+    current_user: User = Depends(get_current_user)
+):
+
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "username": current_user.username,
+        "role": current_user.role
     }
