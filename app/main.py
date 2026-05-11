@@ -9,11 +9,13 @@ from app.core.database import engine
 
 from app.models.user import User
 
+from app.routes.auth import router as auth_router
+
 app = FastAPI(
     title="PhotoShare API"
 )
 
-# Чекаємо поки PostgreSQL стартане
+# Retry для PostgreSQL
 for i in range(10):
 
     try:
@@ -29,6 +31,9 @@ for i in range(10):
         print("Database not ready...")
 
         time.sleep(2)
+
+# Routes
+app.include_router(auth_router)
 
 
 @app.get("/")

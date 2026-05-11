@@ -11,3 +11,5 @@ cloudinary
 qrcode[pil]
 pytest
 httpx
+email-validator
+bcrypt==4.0.1
