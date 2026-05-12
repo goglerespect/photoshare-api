@@ -3,6 +3,8 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Boolean
 
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
@@ -10,14 +12,47 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
+    # Primary key
+    id = Column(
+        Integer,
+        primary_key=True
+    )
 
-    email = Column(String, unique=True)
+    # User email
+    email = Column(
+        String,
+        unique=True,
+        nullable=False
+    )
 
-    username = Column(String, unique=True)
+    # Username
+    username = Column(
+        String,
+        unique=True,
+        nullable=False
+    )
 
-    password = Column(String)
+    # Hashed password
+    password = Column(
+        String,
+        nullable=False
+    )
 
-    role = Column(String, default="user")
+    # Roles:
+    # user / moderator / admin
+    role = Column(
+        String,
+        default="user"
+    )
 
-    is_active = Column(Boolean, default=True)
+    # Ban system
+    is_active = Column(
+        Boolean,
+        default=True
+    )
+
+    # User photos
+    photos = relationship(
+        "Photo",
+        back_populates="owner"
+    )

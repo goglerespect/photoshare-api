@@ -4,15 +4,18 @@ from sqlalchemy.exc import OperationalError
 
 import time
 
+# Database
 from app.core.database import Base
 from app.core.database import engine
 
-# Import models
+# Models
 from app.models.user import User
+from app.models.photo import Photo
 
-# Import routes
+# Routes
 from app.routes.auth import router as auth_router
 from app.routes.test import router as test_router
+from app.routes.photos import router as photos_router
 
 
 # FastAPI app
@@ -26,7 +29,7 @@ for i in range(10):
 
     try:
 
-        # Create tables
+        # Create database tables
         Base.metadata.create_all(bind=engine)
 
         print("Database connected!")
@@ -40,9 +43,12 @@ for i in range(10):
         time.sleep(2)
 
 
-# Connect routes
+# Routes
 app.include_router(auth_router)
+
 app.include_router(test_router)
+
+app.include_router(photos_router)
 
 
 # Root endpoint
