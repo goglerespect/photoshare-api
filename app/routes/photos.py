@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.photo import Photo
 
 from app.schemas.photo import PhotoCreate
+from app.schemas.photo import PhotoUpdate
 
 
 router = APIRouter(
@@ -74,4 +75,88 @@ def get_photo(
         "description": photo.description,
         "image_url": photo.image_url,
         "owner_id": photo.owner_id
+    }
+
+
+# UPDATE PHOTO
+@router.put("/{photo_id}")
+def update_photo(
+    photo_id: int,
+    body: PhotoUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    photo = db.query(Photo).filter(
+        Photo.id == photo_id
+    ).first()
+
+    if not photo:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not found"
+        )
+
+    # Only owner or admin
+    if (
+        photo.owner_id != current_user.id
+        and current_user.role != "admin"
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    # Update data
+    photo.title = body.title
+
+    photo.description = body.description
+
+    db.commit()
+
+    db.refresh(photo)
+
+    return {
+        "message": "Photo updated"
+    }
+
+
+# DELETE PHOTO
+@router.delete("/{photo_id}")
+def delete_photo(
+    photo_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    photo = db.query(Photo).filter(
+        Photo.id == photo_id
+    ).first()
+
+    if not photo:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not found"
+        )
+
+    # Only owner or admin
+    if (
+        photo.owner_id != current_user.id
+        and current_user.role != "admin"
+    ):
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    db.delete(photo)
+
+    db.commit()
+
+    return {
+        "message": "Photo deleted"
     }
