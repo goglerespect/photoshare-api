@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
+from fastapi import Form
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,7 @@ from app.core.auth import get_current_user
 
 from app.models.user import User
 from app.models.photo import Photo
+from app.models.tag import Tag
 
 from app.schemas.photo import PhotoUpdate
 
@@ -31,12 +33,27 @@ router = APIRouter(
 # CREATE PHOTO
 @router.post("/")
 def create_photo(
-    title: str,
-    description: str,
+    title: str = Form(...),
+    description: str = Form(...),
+    tags: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # Convert tags string to list
+    tags_list = [
+        tag.strip().lower()
+        for tag in tags.split(",")
+    ]
+
+    # Max 5 tags
+    if len(tags_list) > 5:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 5 tags allowed"
+        )
 
     # Upload image to Cloudinary
     upload_result = cloudinary.uploader.upload(
@@ -72,6 +89,28 @@ def create_photo(
         owner_id=current_user.id
     )
 
+    # Add tags
+    for tag_name in tags_list:
+
+        tag = db.query(Tag).filter(
+            Tag.name == tag_name
+        ).first()
+
+        # Create tag if not exists
+        if not tag:
+
+            tag = Tag(
+                name=tag_name
+            )
+
+            db.add(tag)
+
+            db.commit()
+
+            db.refresh(tag)
+
+        photo.tags.append(tag)
+
     # Save to database
     db.add(photo)
 
@@ -85,6 +124,7 @@ def create_photo(
         "description": photo.description,
         "image_url": photo.image_url,
         "thumbnail_url": thumbnail_url,
+        "tags": tags_list,
         "owner_id": photo.owner_id
     }
 
@@ -112,8 +152,25 @@ def get_photo(
         "title": photo.title,
         "description": photo.description,
         "image_url": photo.image_url,
-        "owner_id": photo.owner_id
+        "owner_id": photo.owner_id,
+        "tags": [tag.name for tag in photo.tags]
     }
+
+
+# SEARCH PHOTOS BY TAG
+@router.get("/tag/{tag_name}")
+def get_photos_by_tag(
+    tag_name: str,
+    db: Session = Depends(get_db)
+):
+
+    photos = db.query(Photo).join(
+        Photo.tags
+    ).filter(
+        Tag.name == tag_name.lower()
+    ).all()
+
+    return photos
 
 
 # UPDATE PHOTO

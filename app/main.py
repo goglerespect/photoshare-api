@@ -13,6 +13,8 @@ from app.core.database import engine
 from app.models.user import User
 from app.models.photo import Photo
 from app.models.comment import Comment
+from app.models.tag import Tag
+from app.models.photo_tag import photo_tags
 
 # Routes
 from app.routes.auth import router as auth_router

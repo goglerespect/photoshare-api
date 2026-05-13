@@ -7,6 +7,8 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+from app.models.photo_tag import photo_tags
+
 
 class Photo(Base):
 
@@ -48,4 +50,11 @@ class Photo(Base):
     comments = relationship(
         "Comment",
         back_populates="photo"
+    )
+
+    # Photo tags
+    tags = relationship(
+        "Tag",
+        secondary=photo_tags,
+        back_populates="photos"
     )
