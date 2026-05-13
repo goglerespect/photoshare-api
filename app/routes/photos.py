@@ -4,9 +4,13 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
 
-import shutil
-import uuid
 from sqlalchemy.orm import Session
+
+import cloudinary
+import cloudinary.uploader
+
+# Cloudinary config
+import app.core.cloudinary
 
 from app.core.database import get_db
 
@@ -15,7 +19,6 @@ from app.core.auth import get_current_user
 from app.models.user import User
 from app.models.photo import Photo
 
-from app.schemas.photo import PhotoCreate
 from app.schemas.photo import PhotoUpdate
 
 
@@ -35,23 +38,21 @@ def create_photo(
     current_user: User = Depends(get_current_user)
 ):
 
-    # Generate unique filename
-    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    # Upload image to Cloudinary
+    upload_result = cloudinary.uploader.upload(
+        file.file,
 
-    file_path = f"uploads/{unique_filename}"
+        cloud_name=app.core.cloudinary.CLOUD_NAME,
 
-    # Save file
-    with open(file_path, "wb") as buffer:
+        api_key=app.core.cloudinary.API_KEY,
 
-        shutil.copyfileobj(
-            file.file,
-            buffer
-        )
+        api_secret=app.core.cloudinary.API_SECRET
+    )
 
-    # Local image URL
-    image_url = f"/uploads/{unique_filename}"
+    # Get uploaded image URL
+    image_url = upload_result["secure_url"]
 
-    # Create photo
+    # Create photo object
     photo = Photo(
         title=title,
         description=description,
@@ -59,6 +60,7 @@ def create_photo(
         owner_id=current_user.id
     )
 
+    # Save to database
     db.add(photo)
 
     db.commit()
@@ -69,7 +71,8 @@ def create_photo(
         "id": photo.id,
         "title": photo.title,
         "description": photo.description,
-        "image_url": photo.image_url
+        "image_url": photo.image_url,
+        "owner_id": photo.owner_id
     }
 
 
@@ -131,7 +134,7 @@ def update_photo(
             detail="Access denied"
         )
 
-    # Update data
+    # Update photo
     photo.title = body.title
 
     photo.description = body.description

@@ -12,6 +12,10 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:1234@db:5432/photoshare
 
+      CLOUDINARY_CLOUD_NAME: dcmgcnk7k
+      CLOUDINARY_API_KEY: 219446151441865
+      CLOUDINARY_API_SECRET: cZJR3hz4PjvZt4csmqvrsd3HDRQ
+
   db:
     image: postgres:16
 
