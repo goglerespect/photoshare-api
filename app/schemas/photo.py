@@ -7,8 +7,6 @@ class PhotoCreate(BaseModel):
 
     description: str
 
-    image_url: str
-
 
 class PhotoUpdate(BaseModel):
 

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy.exc import OperationalError
 
@@ -49,6 +50,14 @@ app.include_router(auth_router)
 app.include_router(test_router)
 
 app.include_router(photos_router)
+
+
+# Static uploads folder
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
+)
 
 
 # Root endpoint

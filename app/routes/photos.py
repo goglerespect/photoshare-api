@@ -1,7 +1,11 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import UploadFile
+from fastapi import File
 
+import shutil
+import uuid
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -24,15 +28,34 @@ router = APIRouter(
 # CREATE PHOTO
 @router.post("/")
 def create_photo(
-    body: PhotoCreate,
+    title: str,
+    description: str,
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
 
+    # Generate unique filename
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+
+    file_path = f"uploads/{unique_filename}"
+
+    # Save file
+    with open(file_path, "wb") as buffer:
+
+        shutil.copyfileobj(
+            file.file,
+            buffer
+        )
+
+    # Local image URL
+    image_url = f"/uploads/{unique_filename}"
+
+    # Create photo
     photo = Photo(
-        title=body.title,
-        description=body.description,
-        image_url=body.image_url,
+        title=title,
+        description=description,
+        image_url=image_url,
         owner_id=current_user.id
     )
 
@@ -46,8 +69,7 @@ def create_photo(
         "id": photo.id,
         "title": photo.title,
         "description": photo.description,
-        "image_url": photo.image_url,
-        "owner_id": photo.owner_id
+        "image_url": photo.image_url
     }
 
 
