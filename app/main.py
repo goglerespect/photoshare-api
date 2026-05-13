@@ -12,11 +12,13 @@ from app.core.database import engine
 # Models
 from app.models.user import User
 from app.models.photo import Photo
+from app.models.comment import Comment
 
 # Routes
 from app.routes.auth import router as auth_router
-from app.routes.test import router as test_router
 from app.routes.photos import router as photos_router
+from app.routes.comments import router as comments_router
+from app.routes.test import router as test_router
 
 
 # FastAPI app
@@ -47,12 +49,14 @@ for i in range(10):
 # Routes
 app.include_router(auth_router)
 
-app.include_router(test_router)
-
 app.include_router(photos_router)
 
+app.include_router(comments_router)
 
-# Static uploads folder
+app.include_router(test_router)
+
+
+# Static uploads
 app.mount(
     "/uploads",
     StaticFiles(directory="uploads"),

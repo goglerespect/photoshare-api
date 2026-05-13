@@ -8,9 +8,9 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
-class Photo(Base):
+class Comment(Base):
 
-    __tablename__ = "photos"
+    __tablename__ = "comments"
 
     id = Column(
         Integer,
@@ -18,17 +18,7 @@ class Photo(Base):
         index=True
     )
 
-    title = Column(
-        String,
-        nullable=False
-    )
-
-    description = Column(
-        String,
-        nullable=False
-    )
-
-    image_url = Column(
+    text = Column(
         String,
         nullable=False
     )
@@ -38,14 +28,17 @@ class Photo(Base):
         ForeignKey("users.id")
     )
 
-    # Photo owner
-    owner = relationship(
-        "User",
-        back_populates="photos"
+    photo_id = Column(
+        Integer,
+        ForeignKey("photos.id")
     )
 
-    # Photo comments
-    comments = relationship(
-        "Comment",
-        back_populates="photo"
+    owner = relationship(
+        "User",
+        back_populates="comments"
+    )
+
+    photo = relationship(
+        "Photo",
+        back_populates="comments"
     )
