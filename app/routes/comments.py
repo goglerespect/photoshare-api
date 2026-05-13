@@ -57,10 +57,12 @@ def create_comment(
     db.refresh(comment)
 
     return {
-        "id": comment.id,
-        "text": comment.text,
-        "photo_id": comment.photo_id,
-        "owner_id": comment.owner_id
+    "id": comment.id,
+    "text": comment.text,
+    "photo_id": comment.photo_id,
+    "owner_id": comment.owner_id,
+    "created_at": comment.created_at,
+    "updated_at": comment.updated_at
     }
 
 
@@ -147,11 +149,11 @@ def delete_comment(
             detail="Comment not found"
         )
 
-    # Owner or admin
-    if (
-        comment.owner_id != current_user.id
-        and current_user.role != "admin"
-    ):
+    # Only moderator or admin
+    if current_user.role not in [
+    "moderator",
+    "admin"
+    ]:
 
         raise HTTPException(
             status_code=403,

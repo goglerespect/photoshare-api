@@ -2,6 +2,9 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime
+
+from sqlalchemy.sql import func
 
 from sqlalchemy.orm import relationship
 
@@ -33,6 +36,20 @@ class Comment(Base):
         ForeignKey("photos.id")
     )
 
+    # Created timestamp
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+    # Updated timestamp
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
+
+    # Relations
     owner = relationship(
         "User",
         back_populates="comments"
