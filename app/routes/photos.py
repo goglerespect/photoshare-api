@@ -49,8 +49,20 @@ def create_photo(
         api_secret=app.core.cloudinary.API_SECRET
     )
 
-    # Get uploaded image URL
+    # Original image URL
     image_url = upload_result["secure_url"]
+
+    # Cloudinary public ID
+    public_id = upload_result["public_id"]
+
+    # Thumbnail URL
+    thumbnail_url = cloudinary.CloudinaryImage(
+        public_id
+    ).build_url(
+        width=300,
+        height=300,
+        crop="fill"
+    )
 
     # Create photo object
     photo = Photo(
@@ -72,6 +84,7 @@ def create_photo(
         "title": photo.title,
         "description": photo.description,
         "image_url": photo.image_url,
+        "thumbnail_url": thumbnail_url,
         "owner_id": photo.owner_id
     }
 
