@@ -2,6 +2,9 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime
+
+from sqlalchemy.sql import func
 
 from sqlalchemy.orm import relationship
 
@@ -38,6 +41,12 @@ class Photo(Base):
     owner_id = Column(
         Integer,
         ForeignKey("users.id")
+    )
+
+    # Photo creation date
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
     )
 
     # Photo owner

@@ -4,8 +4,10 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
+from fastapi import Query
 
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 
 import cloudinary
 import cloudinary.uploader
@@ -32,6 +34,25 @@ router = APIRouter(
     prefix="/photos",
     tags=["photos"]
 )
+
+
+# GET ALL PHOTOS WITH PAGINATION
+@router.get("/")
+def get_all_photos(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+
+    skip = (page - 1) * limit
+
+    photos = db.query(Photo).offset(
+        skip
+    ).limit(
+        limit
+    ).all()
+
+    return photos
 
 
 # CREATE PHOTO
@@ -104,7 +125,6 @@ def create_photo(
             Tag.name == tag_name
         ).first()
 
-        # Create tag if not exists
         if not tag:
 
             tag = Tag(
@@ -119,7 +139,7 @@ def create_photo(
 
         photo.tags.append(tag)
 
-    # Save to database
+    # Save photo
     db.add(photo)
 
     db.commit()
@@ -133,11 +153,12 @@ def create_photo(
         "image_url": photo.image_url,
         "thumbnail_url": thumbnail_url,
         "tags": tags_list,
-        "owner_id": photo.owner_id
+        "owner_id": photo.owner_id,
+        "created_at": photo.created_at
     }
 
 
-# GET PHOTO
+# GET SINGLE PHOTO
 @router.get("/{photo_id}")
 def get_photo(
     photo_id: int,
@@ -161,8 +182,23 @@ def get_photo(
         "description": photo.description,
         "image_url": photo.image_url,
         "owner_id": photo.owner_id,
+        "created_at": photo.created_at,
         "tags": [tag.name for tag in photo.tags]
     }
+
+
+# SEARCH PHOTOS BY TITLE
+@router.get("/search/")
+def search_photos(
+    query: str,
+    db: Session = Depends(get_db)
+):
+
+    photos = db.query(Photo).filter(
+        Photo.title.ilike(f"%{query}%")
+    ).all()
+
+    return photos
 
 
 # SEARCH PHOTOS BY TAG
@@ -176,6 +212,19 @@ def get_photos_by_tag(
         Photo.tags
     ).filter(
         Tag.name == tag_name.lower()
+    ).all()
+
+    return photos
+
+
+# FILTER PHOTOS BY DATE
+@router.get("/filter/date")
+def filter_photos_by_date(
+    db: Session = Depends(get_db)
+):
+
+    photos = db.query(Photo).order_by(
+        desc(Photo.created_at)
     ).all()
 
     return photos
