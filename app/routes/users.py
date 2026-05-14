@@ -32,6 +32,7 @@ def get_my_profile(
         "bio": current_user.bio,
         "avatar_url": current_user.avatar_url,
         "role": current_user.role,
+        "is_active": current_user.is_active,
         "created_at": current_user.created_at,
         "photos_count": len(current_user.photos)
     }
@@ -60,6 +61,7 @@ def get_user_profile(
         "username": user.username,
         "bio": user.bio,
         "avatar_url": user.avatar_url,
+        "role": user.role,
         "created_at": user.created_at,
         "photos_count": len(user.photos)
     }
@@ -125,6 +127,122 @@ def ban_user(
 
     db.commit()
 
+    db.refresh(user)
+
     return {
-        "message": "User banned"
+        "message": f"{user.username} banned"
+    }
+
+
+# UNBAN USER
+@router.put("/unban/{user_id}")
+def unban_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only admin
+    if current_user.role != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.is_active = True
+
+    db.commit()
+
+    db.refresh(user)
+
+    return {
+        "message": f"{user.username} unbanned"
+    }
+
+
+# MAKE MODERATOR
+@router.put("/make-moderator/{user_id}")
+def make_moderator(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only admin
+    if current_user.role != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.role = "moderator"
+
+    db.commit()
+
+    db.refresh(user)
+
+    return {
+        "message": f"{user.username} is now moderator"
+    }
+
+
+# REMOVE MODERATOR
+@router.put("/remove-moderator/{user_id}")
+def remove_moderator(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only admin
+    if current_user.role != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.role = "user"
+
+    db.commit()
+
+    db.refresh(user)
+
+    return {
+        "message": f"{user.username} is now user"
     }
