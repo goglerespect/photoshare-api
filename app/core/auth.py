@@ -3,7 +3,7 @@ from jose import JWTError
 
 from datetime import datetime
 from datetime import timedelta
-
+from datetime import timezone
 from fastapi import Depends
 from fastapi import HTTPException
 
@@ -34,7 +34,7 @@ def create_access_token(data: dict):
 
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(
+    expire = datetime.now(timezone.utc) + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 

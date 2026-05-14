@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from pydantic import ConfigDict
 from typing import List
 
 
@@ -33,6 +33,6 @@ class PhotoResponse(BaseModel):
 
     tags: List[str]
 
-    class Config:
-
+    model_config = ConfigDict(
         from_attributes = True
+    )
