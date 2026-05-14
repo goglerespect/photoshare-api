@@ -8,6 +8,7 @@ from fastapi import Query
 
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from sqlalchemy import func
 
 import cloudinary
 import cloudinary.uploader
@@ -26,6 +27,7 @@ from app.models.user import User
 from app.models.photo import Photo
 from app.models.tag import Tag
 from app.models.transformation import Transformation
+from app.models.rating import Rating
 
 from app.schemas.photo import PhotoUpdate
 
@@ -176,6 +178,12 @@ def get_photo(
             detail="Photo not found"
         )
 
+    avg_rating = db.query(
+        func.avg(Rating.value)
+    ).filter(
+        Rating.photo_id == photo.id
+    ).scalar()
+
     return {
         "id": photo.id,
         "title": photo.title,
@@ -183,6 +191,8 @@ def get_photo(
         "image_url": photo.image_url,
         "owner_id": photo.owner_id,
         "created_at": photo.created_at,
+        "average_rating": round(avg_rating, 2)
+        if avg_rating else 0,
         "tags": [tag.name for tag in photo.tags]
     }
 
@@ -228,6 +238,41 @@ def filter_photos_by_date(
     ).all()
 
     return photos
+
+
+# FILTER PHOTOS BY RATING
+@router.get("/filter/rating")
+def filter_photos_by_rating(
+    db: Session = Depends(get_db)
+):
+
+    photos = db.query(
+        Photo,
+        func.avg(Rating.value).label("avg_rating")
+    ).outerjoin(
+        Rating,
+        Photo.id == Rating.photo_id
+    ).group_by(
+        Photo.id
+    ).order_by(
+        func.avg(Rating.value).desc()
+    ).all()
+
+    result = []
+
+    for photo, avg_rating in photos:
+
+        result.append({
+            "photo_id": photo.id,
+            "title": photo.title,
+            "description": photo.description,
+            "image_url": photo.image_url,
+            "average_rating": round(avg_rating, 2)
+            if avg_rating else 0,
+            "created_at": photo.created_at
+        })
+
+    return result
 
 
 # CREATE TRANSFORMATION + QR
