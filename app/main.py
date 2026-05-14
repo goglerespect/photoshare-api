@@ -16,12 +16,14 @@ from app.models.comment import Comment
 from app.models.tag import Tag
 from app.models.photo_tag import photo_tags
 from app.models.transformation import Transformation
+from app.models.rating import Rating
 
 # Routes
 from app.routes.auth import router as auth_router
 from app.routes.photos import router as photos_router
 from app.routes.comments import router as comments_router
 from app.routes.users import router as users_router
+from app.routes.ratings import router as ratings_router
 from app.routes.test import router as test_router
 
 
@@ -31,12 +33,12 @@ app = FastAPI(
 )
 
 
-# Waiting PostgreSQL startup
+# Wait PostgreSQL startup
 for i in range(10):
 
     try:
 
-        # Create database tables
+        # Create tables
         Base.metadata.create_all(bind=engine)
 
         print("Database connected!")
@@ -53,16 +55,18 @@ for i in range(10):
 # Routes
 app.include_router(auth_router)
 
+app.include_router(users_router)
+
 app.include_router(photos_router)
 
 app.include_router(comments_router)
 
-app.include_router(users_router)
+app.include_router(ratings_router)
 
 app.include_router(test_router)
 
 
-# Static uploads
+# Static files
 app.mount(
     "/uploads",
     StaticFiles(directory="uploads"),

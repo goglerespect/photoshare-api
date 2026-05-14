@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 
 from sqlalchemy.orm import Session
 
@@ -246,3 +247,79 @@ def remove_moderator(
     return {
         "message": f"{user.username} is now user"
     }
+
+
+# SEARCH USERS
+@router.get("/search/")
+def search_users(
+    query: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only moderator/admin
+    if current_user.role not in [
+        "moderator",
+        "admin"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    users = db.query(User).filter(
+        User.username.ilike(f"%{query}%")
+    ).all()
+
+    return users
+
+
+# FILTER ACTIVE USERS
+@router.get("/filter/active")
+def filter_active_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only moderator/admin
+    if current_user.role not in [
+        "moderator",
+        "admin"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    users = db.query(User).filter(
+        User.is_active == True
+    ).all()
+
+    return users
+
+
+# FILTER BANNED USERS
+@router.get("/filter/banned")
+def filter_banned_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Only moderator/admin
+    if current_user.role not in [
+        "moderator",
+        "admin"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    users = db.query(User).filter(
+        User.is_active == False
+    ).all()
+
+    return users

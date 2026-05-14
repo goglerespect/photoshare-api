@@ -67,3 +67,9 @@ class Photo(Base):
         secondary=photo_tags,
         back_populates="photos"
     )
+
+    # Photo ratings
+    ratings = relationship(
+        "Rating",
+        back_populates="photo"
+    )
