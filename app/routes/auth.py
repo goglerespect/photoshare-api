@@ -111,6 +111,14 @@ def login(
             status_code=401,
             detail="Invalid credentials"
         )
+    
+    # Check if user is banned
+    if not user.is_active:
+
+        raise HTTPException(
+            status_code=403,
+            detail="User is banned"
+        )
 
     access_token = create_access_token({
         "sub": user.email

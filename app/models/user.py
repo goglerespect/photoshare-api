@@ -1,6 +1,10 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy import Boolean
+from sqlalchemy import DateTime
+
+from sqlalchemy.sql import func
 
 from sqlalchemy.orm import relationship
 
@@ -39,13 +43,36 @@ class User(Base):
         default="user"
     )
 
-    # User photos
+    # User active status
+    is_active = Column(
+        Boolean,
+        default=True
+    )
+
+    # User bio
+    bio = Column(
+        String,
+        nullable=True
+    )
+
+    # Avatar URL
+    avatar_url = Column(
+        String,
+        nullable=True
+    )
+
+    # Registration date
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+    # Relations
     photos = relationship(
         "Photo",
         back_populates="owner"
     )
 
-    # User comments
     comments = relationship(
         "Comment",
         back_populates="owner"

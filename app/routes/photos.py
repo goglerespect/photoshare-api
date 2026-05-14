@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 import cloudinary
 import cloudinary.uploader
 
+import qrcode
+import uuid
+
 # Cloudinary config
 import app.core.cloudinary
 
@@ -20,6 +23,7 @@ from app.core.auth import get_current_user
 from app.models.user import User
 from app.models.photo import Photo
 from app.models.tag import Tag
+from app.models.transformation import Transformation
 
 from app.schemas.photo import PhotoUpdate
 
@@ -35,17 +39,21 @@ router = APIRouter(
 def create_photo(
     title: str = Form(...),
     description: str = Form(...),
-    tags: str = Form(...),
+    tags: str = Form(""),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
 
     # Convert tags string to list
-    tags_list = [
-        tag.strip().lower()
-        for tag in tags.split(",")
-    ]
+    tags_list = []
+
+    if tags:
+
+        tags_list = [
+            tag.strip().lower()
+            for tag in tags.split(",")
+        ]
 
     # Max 5 tags
     if len(tags_list) > 5:
@@ -173,6 +181,71 @@ def get_photos_by_tag(
     return photos
 
 
+# CREATE TRANSFORMATION + QR
+@router.post("/transform/{photo_id}")
+def create_transformation(
+    photo_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    photo = db.query(Photo).filter(
+        Photo.id == photo_id
+    ).first()
+
+    if not photo:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not found"
+        )
+
+    # Get Cloudinary public ID
+    public_id = photo.image_url.split("/")[-1].split(".")[0]
+
+    # Generate transformed image URL
+    transformed_url = cloudinary.CloudinaryImage(
+        public_id
+    ).build_url(
+        width=500,
+        height=500,
+        crop="fill",
+        effect="grayscale"
+    )
+
+    # Generate QR code
+    qr = qrcode.make(transformed_url)
+
+    filename = f"{uuid.uuid4()}.png"
+
+    qr_path = f"uploads/qr/{filename}"
+
+    qr.save(qr_path)
+
+    qr_code_url = f"/uploads/qr/{filename}"
+
+    # Save transformation
+    transformation = Transformation(
+        transformed_url=transformed_url,
+        qr_code_url=qr_code_url,
+        transformation_type="grayscale",
+        photo_id=photo.id,
+        owner_id=current_user.id
+    )
+
+    db.add(transformation)
+
+    db.commit()
+
+    db.refresh(transformation)
+
+    return {
+        "id": transformation.id,
+        "transformed_url": transformation.transformed_url,
+        "qr_code_url": transformation.qr_code_url
+    }
+
+
 # UPDATE PHOTO
 @router.put("/{photo_id}")
 def update_photo(
@@ -204,7 +277,6 @@ def update_photo(
             detail="Access denied"
         )
 
-    # Update photo
     photo.title = body.title
 
     photo.description = body.description
